@@ -143,6 +143,7 @@ func goCommand(place string) string {
 			break
 		}
 	}
+
 	if flag == true {
 		for _, location := range Locations {
 			if location.name == place {
