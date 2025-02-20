@@ -54,6 +54,10 @@ var game0cases = [][]gameCase{
 	},
 }
 
+func test_git() {
+	//test git
+}
+
 func TestGame0(t *testing.T) {
 	for caseNum, commands := range game0cases {
 		initGame()
