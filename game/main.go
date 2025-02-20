@@ -16,7 +16,6 @@ type Location struct {
 
 type Player struct {
 	itmes []string
-	state int
 }
 
 type World struct {
