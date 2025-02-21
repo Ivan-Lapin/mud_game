@@ -11,6 +11,7 @@ type Location struct {
 	motions     []string
 	name        string
 	description string
+	access      bool
 }
 
 type Player struct {
@@ -24,7 +25,7 @@ type World struct {
 }
 
 var w = World{}
-var Locations = []Location{}
+var Locations []Location
 
 func initGame() {
 	kitchen := Location{
@@ -36,6 +37,7 @@ func initGame() {
 			},
 		},
 		motions: []string{"коридор"},
+		access:  true,
 	}
 
 	hall := Location{
@@ -43,6 +45,7 @@ func initGame() {
 		description: "ничего интересного",
 		items:       nil,
 		motions:     []string{"кухня", "комната", "улица"},
+		access:      true,
 	}
 
 	room := Location{
@@ -57,12 +60,14 @@ func initGame() {
 			},
 		},
 		motions: []string{"коридор"},
+		access:  true,
 	}
 
 	outside := Location{
 		name:        "улица",
 		description: "на улице весна",
 		motions:     []string{"домой"},
+		access:      false,
 	}
 
 	Locations = []Location{kitchen, hall, room, outside}
@@ -110,6 +115,22 @@ func deleteItem(items *[]map[string][]string, name string) {
 		}
 	}
 
+}
+
+func deleteMission(missions_slice []string, name_mission string) []string {
+	var new_missions []string
+	for _, mission := range missions_slice {
+		if mission != name_mission {
+			new_missions = append(new_missions, mission)
+		}
+	}
+	return new_missions
+}
+
+func checkCompleteMissionBag() {
+	if slices.Contains(w.Player.items, "конспекты") && slices.Contains(w.Player.items, "ключи") {
+		w.Player.missions = deleteMission(w.Player.missions, "собрать рюкзак")
+	}
 }
 
 // Вспомогательная функция для соединения массива строк с использованием союза
@@ -160,20 +181,26 @@ func goCommand(place string) string {
 		}
 	}
 
-	if pathExist == true {
+	for _, location := range Locations {
+		if location.name == place && !location.access {
+			return "дверь закрыта"
+		}
+	}
+
+	if pathExist {
 		for _, location := range Locations {
 			if location.name == place {
 				w.CurrentLocation = location
 			}
 		}
 	} else {
-		return "нет пути в " + fmt.Sprintf("%s", place)
+		return "нет пути в " + place
 	}
 
 	answer := w.CurrentLocation.description
 
 	if place == "кухня" {
-		answer += fmt.Sprintf(", ничего интересного")
+		answer += ", ничего интересного"
 	}
 
 	answer += fmt.Sprintf(", можно пройти - %s", strings.Join(w.CurrentLocation.motions, ", "))
@@ -190,7 +217,7 @@ func donCommand(obj string) string {
 			}
 		}
 	}
-	if itemExist == true {
+	if itemExist {
 		w.Player.items = append(w.Player.items, obj)
 		answer := fmt.Sprintf("вы надели: %s", obj)
 		return answer
@@ -200,7 +227,7 @@ func donCommand(obj string) string {
 
 func getCommand(obj string) string {
 
-	if slices.Contains(w.Player.items, "рюкзак") == false {
+	if !slices.Contains(w.Player.items, "рюкзак") {
 		return "некуда класть"
 	}
 
@@ -214,9 +241,10 @@ func getCommand(obj string) string {
 			}
 		}
 	}
-	if itemExist == true {
+	if itemExist {
 		w.Player.items = append(w.Player.items, obj)
 		answer := fmt.Sprintf("предмет добавлен в инвентарь: %s", obj)
+		checkCompleteMissionBag()
 		return answer
 	}
 	return "нет такого"
@@ -224,12 +252,18 @@ func getCommand(obj string) string {
 
 func applyCommand(obj string, sub string) string {
 	answer := ""
-	if slices.Contains(w.Player.items, obj) == false {
+	if !slices.Contains(w.Player.items, obj) {
 		answer = fmt.Sprintf("нет предмета в инвентаре - %s", obj)
 		return answer
 	} else {
 		if obj == "ключи" && sub == "дверь" {
 			answer = fmt.Sprintf("%s открыта", sub)
+			for i, location := range Locations {
+				if location.name == "улица" {
+					Locations[i].access = true
+					break
+				}
+			}
 		} else {
 			answer = "не к чему применить"
 		}
