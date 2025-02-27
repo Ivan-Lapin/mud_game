@@ -12,6 +12,7 @@ type Location struct {
 	name        string
 	description string
 	access      bool
+	showTask    bool
 }
 
 type Player struct {
@@ -22,12 +23,13 @@ type Player struct {
 type World struct {
 	Player          Player
 	CurrentLocation Location
+	Locations       []Location
 }
 
-var w = World{}
-var Locations []Location
+var w World
 
 func initGame() {
+
 	kitchen := Location{
 		name:        "кухня",
 		description: "ты находишься на кухне",
@@ -36,8 +38,9 @@ func initGame() {
 				"на столе": {"чай"},
 			},
 		},
-		motions: []string{"коридор"},
-		access:  true,
+		motions:  []string{"коридор"},
+		access:   true,
+		showTask: true,
 	}
 
 	hall := Location{
@@ -70,7 +73,7 @@ func initGame() {
 		access:      false,
 	}
 
-	Locations = []Location{kitchen, hall, room, outside}
+	w.Locations = []Location{kitchen, hall, room, outside}
 
 	w = World{
 		Player: Player{
@@ -181,14 +184,14 @@ func goCommand(place string) string {
 		}
 	}
 
-	for _, location := range Locations {
+	for _, location := range w.Locations {
 		if location.name == place && !location.access {
 			return "дверь закрыта"
 		}
 	}
 
 	if pathExist {
-		for _, location := range Locations {
+		for _, location := range w.Locations {
 			if location.name == place {
 				w.CurrentLocation = location
 			}
@@ -258,9 +261,9 @@ func applyCommand(obj string, sub string) string {
 	} else {
 		if obj == "ключи" && sub == "дверь" {
 			answer = fmt.Sprintf("%s открыта", sub)
-			for i, location := range Locations {
+			for i, location := range w.Locations {
 				if location.name == "улица" {
-					Locations[i].access = true
+					w.Locations[i].access = true
 					break
 				}
 			}
@@ -273,15 +276,16 @@ func applyCommand(obj string, sub string) string {
 
 func handleCommand(command string) string {
 	parts := strings.Split(command, " ")
-	if parts[0] == "осмотреться" {
+	switch parts[0] {
+	case "осмотреться":
 		return lookCommand()
-	} else if parts[0] == "идти" {
+	case "идти":
 		return goCommand(parts[1])
-	} else if parts[0] == "надеть" {
+	case "надеть":
 		return donCommand(parts[1])
-	} else if parts[0] == "взять" {
+	case "взять":
 		return getCommand(parts[1])
-	} else if parts[0] == "применить" {
+	case "применить":
 		return applyCommand(parts[1], parts[2])
 	}
 	return "неизвестная команда"
